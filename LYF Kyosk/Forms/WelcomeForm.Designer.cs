@@ -50,6 +50,7 @@
             this.Controls.Add(this.label1);
             this.Name = "WelcomeForm";
             this.Text = "Welcome";
+            this.Load += new System.EventHandler(this.WelcomeForm_Load);
             this.Click += new System.EventHandler(this.WelcomeForm_Click);
             this.ResumeLayout(false);
             this.PerformLayout();

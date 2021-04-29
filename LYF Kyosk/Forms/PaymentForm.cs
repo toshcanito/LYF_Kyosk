@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using LYF_Kyosk.Models;
+using DeviceLibrary.Models;
+using DeviceLibrary.Models.Enums;
 
 namespace LYF_Kyosk.Forms
 {
@@ -15,31 +10,35 @@ namespace LYF_Kyosk.Forms
     {
         private Action ChangePayment;
         private Account account;
-        private double _Payment = 0;
+        private decimal _Payment = 0;
+        private decimal _Change = 0;
+        DeviceLibrary.DeviceLibrary device;
 
         public PaymentForm()
         {
             InitializeComponent();
             account = AccountManager.GetSessionAccount();
+            device = new DeviceLibrary.DeviceLibrary();
             ChangePayment += RenderAmount;
         }
 
-        private void ChangePaymentAmount(double amount, bool resetPaymentAmount = false)
+        private void ChangePaymentAmount(decimal amount, DocumentType? type, bool resetPaymentAmount = false)
         {
             if (resetPaymentAmount)
             {
-                _Payment = 0.0;
+                _Payment = 0.0m;
             }
-            else 
+            else
             {
+                Document document = new Document(amount, type.Value, 1);
                 _Payment += amount;
-            }            
+            }
             ChangePayment();
         }
 
-        private double GetRemainingAmount() 
+        private decimal GetRemainingAmount() 
         {
-            double remaining = account.Debt - _Payment;
+            decimal remaining = account.Debt - _Payment;
             return remaining < 0 ? 0 : remaining;
         }
 
@@ -71,9 +70,16 @@ namespace LYF_Kyosk.Forms
 
         private void AfterPaymentProcess() 
         {
-            if (MessageBox.Show("Pago realizado con exito", "", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+            string clossingMessage = "Pago realizado con exito. ";
+            _Change = _Payment - account.Debt;
+            if (_Change > 0)
             {
-                ChangePaymentAmount(0.0, true);
+                clossingMessage += "Cambio entregado " + _Change;
+                device.Dispense(_Change);
+            }
+            if (MessageBox.Show(clossingMessage, "", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+            {
+                ChangePaymentAmount(0.0m, null, true);
                 new WelcomeForm().Show();
                 this.Hide();
             }
@@ -91,16 +97,20 @@ namespace LYF_Kyosk.Forms
 
                 ActionsManager.MakePayment(payment, (p) =>
                 {
-                    Account account = new LYFHttpClient().PostPayment(payment);                    
+                    Account account = new LYFHttpClient().PostPayment(payment);
                     return new Process() { AccountInfo = account, PaymentInfo = payment, TransactionDate = DateTime.Now.ToShortDateString() };
                 });
                 AfterPaymentProcess();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 Rollback();
                 MessageBox.Show("Error al realizar el pago. Descripcion del error: " + ex.Message);
-            }            
+            }
+            finally 
+            {
+                device.Close();
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -116,59 +126,62 @@ namespace LYF_Kyosk.Forms
             this.Hide();
         }
 
+        #region Form Events
         private void PaymentForm_Load(object sender, EventArgs e)
         {
+            device.Enable();
             AssignPaymentValues(account.Debt.ToString(), null, account.Debt.ToString());
         }
 
         private void btnAmount500_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(500);
+            ChangePaymentAmount(500, DocumentType.Bill);
         }
 
         private void btnAmount200_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(200);
+            ChangePaymentAmount(200, DocumentType.Bill);
         }
 
         private void btnAmount100_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(100);
+            ChangePaymentAmount(100, DocumentType.Bill);
         }
 
         private void btnAmount50_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(50);
+            ChangePaymentAmount(50, DocumentType.Bill);
         }
 
         private void btnAmount20_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(20);
+            ChangePaymentAmount(20, DocumentType.Bill);
         }
 
         private void btnAmount10_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(10);
+            ChangePaymentAmount(10, DocumentType.Coin);
         }
 
         private void btnAmount5_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(5);
+            ChangePaymentAmount(5, DocumentType.Coin);
         }
 
         private void btnAmount2_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(2);
+            ChangePaymentAmount(2, DocumentType.Coin);
         }
 
         private void btnAmount1_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(1);
+            ChangePaymentAmount(1, DocumentType.Coin);
         }
 
         private void btnAmount50c_Click(object sender, EventArgs e)
         {
-            ChangePaymentAmount(0.5);
+            ChangePaymentAmount(0.5m, DocumentType.Coin);
         }
+        #endregion
     }
 }

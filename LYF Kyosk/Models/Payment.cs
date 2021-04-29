@@ -12,6 +12,6 @@ namespace LYF_Kyosk.Models
         [JsonProperty("account")]
         public string Account { get; set; }
         [JsonProperty("paid")]
-        public double Paid { get; set; }
+        public decimal Paid { get; set; }
     }
 }

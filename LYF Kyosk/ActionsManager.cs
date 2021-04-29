@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LYF_Kyosk.Models;
+﻿using LYF_Kyosk.Models;
 
 namespace LYF_Kyosk
 {

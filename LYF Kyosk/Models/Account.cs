@@ -10,6 +10,6 @@ namespace LYF_Kyosk.Models
     {
         public string AccountNumber { get; set; }
         public string User { get; set; }
-        public double Debt { get; set; }
+        public decimal Debt { get; set; }
     }
 }
