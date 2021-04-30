@@ -31,6 +31,7 @@ namespace LYF_Kyosk.Forms
             else
             {
                 Document document = new Document(amount, type.Value, 1);
+                device.SimulateInsertion(document);
                 _Payment += amount;
             }
             ChangePayment();
